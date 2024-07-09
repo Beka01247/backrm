@@ -14,7 +14,7 @@ const config = {
 
 const conn = new pg.Client(config);
 
-const tableName = "your_github_username"; // replace this with your GitHub username
+const tableName = "testBeka01247";
 
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS ${tableName} (
@@ -66,7 +66,9 @@ async function fetchAndInsertData() {
       nextUrl = response.data.info.next;
     }
 
-    console.log("Data inserted successfully!");
+    console.log(
+      "Data inserted successfully! To see the content of the table, run 'node checkDb.js'"
+    );
   } catch (err) {
     console.error("Error occurred:", err);
   } finally {
