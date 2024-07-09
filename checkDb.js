@@ -12,7 +12,7 @@ const config = {
 
 const conn = new pg.Client(config);
 
-const tableName = "testBeka01247";
+const tableName = "Beka01247";
 
 async function checkDatabase() {
   await conn.connect();

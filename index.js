@@ -14,7 +14,7 @@ const config = {
 
 const conn = new pg.Client(config);
 
-const tableName = "testBeka01247";
+const tableName = "Beka01247";
 
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS ${tableName} (
@@ -33,23 +33,26 @@ CREATE TABLE IF NOT EXISTS ${tableName} (
 `;
 
 async function fetchAndInsertData() {
-  await conn.connect();
-
   try {
+    await conn.connect();
+    console.log("Connected to the database");
+
     await conn.query(createTableQuery);
+    console.log("Table created or already exists");
 
     let nextUrl = "https://rickandmortyapi.com/api/character";
     while (nextUrl) {
+      console.log(`Fetching data from ${nextUrl}`);
       const response = await axios.get(nextUrl);
       const characters = response.data.results;
 
       const insertQuery = `
-                INSERT INTO ${tableName} (name, status, species, type, gender, origin, location, image, url, created)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
-            `;
+        INSERT INTO ${tableName} (name, status, species, type, gender, origin, location, image, url, created)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+      `;
 
-      for (const character of characters) {
-        await conn.query(insertQuery, [
+      const insertPromises = characters.map((character) =>
+        conn.query(insertQuery, [
           character.name,
           character.status,
           character.species,
@@ -60,8 +63,11 @@ async function fetchAndInsertData() {
           character.image,
           character.url,
           character.created,
-        ]);
-      }
+        ])
+      );
+
+      await Promise.all(insertPromises);
+      console.log(`Inserted ${characters.length} characters`);
 
       nextUrl = response.data.info.next;
     }
@@ -73,6 +79,7 @@ async function fetchAndInsertData() {
     console.error("Error occurred:", err);
   } finally {
     await conn.end();
+    console.log("Database connection closed");
   }
 }
 
