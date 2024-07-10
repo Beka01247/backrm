@@ -19,7 +19,7 @@ async function checkDatabase() {
 
   try {
     const res = await conn.query(`SELECT * FROM ${tableName} LIMIT 10;`);
-    console.log(`Contents of the table ${tableName}:`);
+    console.log(`Инфо с таблицы ${tableName}:`);
     console.table(res.rows);
   } catch (err) {
     console.error("Error occurred:", err);

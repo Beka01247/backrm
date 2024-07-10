@@ -1,4 +1,3 @@
-"use strict";
 const fs = require("fs");
 const pg = require("pg");
 const axios = require("axios");
@@ -18,68 +17,60 @@ const tableName = "Beka01247";
 
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS ${tableName} (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    status VARCHAR(50),
-    species VARCHAR(50),
-    type VARCHAR(50),
-    gender VARCHAR(50),
-    origin VARCHAR(255),
-    location VARCHAR(255),
-    image VARCHAR(255),
-    url VARCHAR(255),
-    created TIMESTAMP
+    id SERIAL PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    data JSONB NOT NULL
 );
 `;
 
 async function fetchAndInsertData() {
   try {
     await conn.connect();
-    console.log("Connected to the database");
+    console.log("Подключено к БД");
 
     await conn.query(createTableQuery);
-    console.log("Table created or already exists");
+    console.log("Таблица создана или уже существует");
 
-    let nextUrl = "https://rickandmortyapi.com/api/character";
-    while (nextUrl) {
-      console.log(`Fetching data from ${nextUrl}`);
-      const response = await axios.get(nextUrl);
+    let urlFetch = "https://rickandmortyapi.com/api/character";
+    while (urlFetch) {
+      const response = await axios.get(urlFetch);
       const characters = response.data.results;
 
       const insertQuery = `
-        INSERT INTO ${tableName} (name, status, species, type, gender, origin, location, image, url, created)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+        INSERT INTO ${tableName} (name, data)
+        VALUES ($1, $2);
       `;
 
-      const insertPromises = characters.map((character) =>
-        conn.query(insertQuery, [
-          character.name,
-          character.status,
-          character.species,
-          character.type,
-          character.gender,
-          character.origin.name,
-          character.location.name,
-          character.image,
-          character.url,
-          character.created,
-        ])
-      );
+      const insertPromises = characters.map((character) => {
+        const data = {
+          status: character.status,
+          species: character.species,
+          type: character.type,
+          gender: character.gender,
+          origin: character.origin,
+          location: character.location,
+          image: character.image,
+          episode: character.episode,
+          url: character.url,
+          created: character.created,
+        };
+
+        return conn.query(insertQuery, [character.name, data]);
+      });
 
       await Promise.all(insertPromises);
-      console.log(`Inserted ${characters.length} characters`);
+      console.log(`Добавлено ${characters.length} персонажей`);
 
-      nextUrl = response.data.info.next;
+      urlFetch = response.data.info.next;
     }
 
     console.log(
-      "Data inserted successfully! To see the content of the table, run 'node checkDb.js'"
+      "Таблица заполнена успешно! Чтобы увидеть данные, можете запустить 'node checkDb.js'"
     );
   } catch (err) {
-    console.error("Error occurred:", err);
+    console.error("Error occurred: ", err);
   } finally {
     await conn.end();
-    console.log("Database connection closed");
   }
 }
 
